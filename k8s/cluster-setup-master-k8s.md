@@ -25,7 +25,7 @@ sudo usermod -aG docker ${USER}
 su - ${USER}
 
 
-# 2. Install K8S
+# 2. Install K8S (version v1.29.15)
 sudo apt-get update
 ### apt-transport-https may be a dummy package; if so, you can skip that package
 sudo apt-get install -y apt-transport-https ca-certificates curl
@@ -56,8 +56,11 @@ sudo sysctl -w net.ipv4.ip_forward=1
 
 # 3. Setup Master Node
 ### Add server IP to kube admin
+<!-- sudo kubeadm init --kubernetes-version=v1.29.15 -->
 kubeadm config images pull
-kubeadm init --apiserver-advertise-address=Your_Server_IP --pod-network-cidr=Your_Server_IP/16 --kubernetes-version=v1.29.15
+kubeadm init --apiserver-advertise-address=Your_Server_IP --pod-network-cidr=Your_Server_IP/16 --kubernetes-version=v1.29.0
+
+<!-- Ex: kubeadm init --apiserver-advertise-address=192.168.56.1 --pod-network-cidr=192.168.0.0/16 --kubernetes-version=v1.29.0 -->
 
 ### After adding server IP, Read carefully the instruction:
 <!-- 
@@ -65,9 +68,9 @@ Your Kubernetes control-plane has initialized successfully!
 
 To start using your cluster, you need to run the following as a regular user:
 
-  mkdir -p $HOME/.kube
-  sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
-  sudo chown $(id -u):$(id -g) $HOME/.kube/config
+mkdir -p $HOME/.kube
+sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+sudo chown $(id -u):$(id -g) $HOME/.kube/config
 
 Alternatively, if you are the root user, you can run:
 
@@ -83,6 +86,14 @@ Then you can join any number of worker nodes by running the following on each as
 ### Install calico network plugin
 => Access the calico home page
 
+kubectl create -f https://raw.githubusercontent.com/projectcalico/calico/v3.27.0/manifests/tigera-operator.yaml
+
+curl https://raw.githubusercontent.com/projectcalico/calico/v3.27.0/manifests/custom-resources.yaml -O
+
+kubectl create -f custom-resources.yaml
+
+watch kubectl get pods -n calico-system
+
 
 # 4. Setup Worker Node
 Process the step 1 & 2.
@@ -90,4 +101,4 @@ Process the step 1 & 2.
 From the master node, executing the print-join-command to get master token. Copy the information then executing in the worker node.
 
 ### Print join command from the master node.
-kubeadm token create  print-join-command
+kubeadm token create  --print-join-command
