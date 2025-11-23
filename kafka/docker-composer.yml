@@ -1,0 +1,50 @@
+version: '3.7'
+services:
+  kafka:
+    image: apache/kafka:4.1.1
+    container_name: kafka-broker
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+
+      # LISTENERS
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093
+
+      # ADVERTISED LISTENER — phải là kafka:9092 để container khác nhìn thấy
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+
+      # Controller quorum đúng host trong Docker
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+
+      KAFKA_LOG_DIRS: /var/lib/kafka/data
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_LOG_RETENTION_HOURS: 168
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      CLUSTER_ID: "Mk3OEYBSD34fcwNTJENDM2Qk"
+
+    volumes:
+      - ./kafka-data-apache:/tmp/kraft-storage
+    restart: always
+
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: kafka-ui
+    depends_on:
+      - kafka
+    ports:
+      - "8080:8080"
+    environment:
+      KAFKA_CLUSTERS_0_NAME: "Kafka Apache 4.1.1 KRaft Local"
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: "kafka:9092" # OK
+      KAFKA_UI_AUTH_TYPE: "BASIC"
+      KAFKA_UI_AUTH_USERS_0_USERNAME: "admin"
+      KAFKA_UI_AUTH_USERS_0_PASSWORD: "@dmin123"
+      KAFKA_UI_AUTH_USERS_0_ROLES: "ROLE_ADMIN"
+    restart: always
